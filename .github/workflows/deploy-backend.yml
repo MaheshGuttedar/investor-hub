@@ -1,0 +1,63 @@
+name: Deploy Backend to AWS
+
+# Disabled until AWS credentials are configured. Re-enable by removing the 'if: false' line below.
+on:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - "services/backend/**"
+  #     - "Dockerfile.backend"
+  #     - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO: investor-hub-backend
+  ECS_CLUSTER: investor-hub
+  ECS_SERVICE: backend-svc
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push backend image
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        run: |
+          docker build \
+            -f Dockerfile.backend \
+            -t $REGISTRY/$ECR_REPO:${{ github.sha }} \
+            -t $REGISTRY/$ECR_REPO:latest \
+            .
+          docker push $REGISTRY/$ECR_REPO --all-tags
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --force-new-deployment
+
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE
+          echo "Backend deployed successfully!"

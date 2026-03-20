@@ -1,0 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 215 25% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 17%;
+
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+   /* teal variable (used to set accent) - value is H S L components without hsl() wrapper
+     so Tailwind's hsl(var(--accent)) continues to work. */
+   --teal: 174 72% 40%;
+   --accent: var(--teal);
+   --accent-foreground: 0 0% 100%;
+
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 47% 18%;
+    --sidebar-ring: 217 91% 60%;
+    --sidebar-muted: 215 16% 70%;
+
+    --admin-bar: 45 93% 47%;
+    --admin-bar-foreground: 222 47% 11%;
+
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 213 27% 84%;
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 47% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 47% 12%;
+    --sidebar-ring: 217 91% 60%;
+    --sidebar-muted: 215 20% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer utilities {
+  .text-link {
+    @apply text-accent underline-offset-2 hover:underline cursor-pointer;
+  }
+}
+
+/* Hero title animation - left commented to avoid page-specific animation
+   (previously a landing-page-specific, interactive animation). If you want
+   animations later, re-enable or add scoped rules in a dedicated css/module. */
+/* .hero-title {
+  transform: translateX(-40px);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: transform 900ms cubic-bezier(.2,.8,.2,1), opacity 900ms ease;
+}
+
+.hero-title.is-visible {
+  transform: translateX(0);
+  opacity: 1;
+} */
+
+/* Removed landing-page scoped styles to restore the site's global styles.
+   The landing header/card/grid overlay rules were removed per user request.
+   Keep the CSS above minimal and global; reapply page-specific rules only if
+   needed in a scoped module or component stylesheet. */
+
+/* Topbar style to match the dark header in the provided screenshot */
+.topbar {
+  background: #071827; /* deep navy */
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+/* A soft card shadow for testimonials */
+.shadow-testimonial {
+  box-shadow: 0 6px 20px rgba(9,30,45,0.06);
+}
+
+/* Feature card hover style: teal border, lift, and soft teal shadow */
+.feature-card {
+  transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.feature-card:hover {
+  border-color: hsl(var(--teal));
+  transform: translateY(-4px);
+  box-shadow: 0 10px 40px rgba(10,191,188,0.1);
+}
+
+/* Carousel / slider visuals */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+}
+
+.carousel-arrow:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.carousel-arrow.left-4 { left: 1rem; }
+.carousel-arrow.right-4 { right: 1rem; }
+.carousel-arrow.left-8 { left: 2rem; }
+.carousel-arrow.right-8 { right: 2rem; }
+
+.slide { opacity: 0; transform: translateY(8px); transition: opacity 500ms ease, transform 500ms ease; }
+.slide.active { opacity: 1; transform: translateY(0); }
+
+/* Fade-in behavior for hero title: hide by default, show with a fade/slide when .is-visible is added */
+.hero-title {
+  /* Keep element in the flow so IntersectionObserver can observe it. */
+  opacity: 0;
+  transform: translateY(12px);
+  will-change: transform, opacity;
+  transition: transform 1600ms cubic-bezier(.2,.8,.2,1), opacity 1600ms cubic-bezier(.2,.8,.2,1);
+}
+
+.hero-title.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}

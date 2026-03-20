@@ -1,0 +1,740 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "RealEstate Backend API",
+    "version": "1.0.0",
+    "description": "API documentation for the RealEstate Investor backend service."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:{port}",
+      "description": "Local development",
+      "variables": {
+        "port": {
+          "default": "4003",
+          "enum": ["4000", "4001", "4002", "4003"]
+        }
+      }
+    }
+  ],
+  "tags": [
+    { "name": "Health", "description": "Service health endpoint" },
+    { "name": "Auth", "description": "Authentication and current user" },
+    { "name": "Projects", "description": "Project CRUD" },
+    { "name": "Investments", "description": "Investments for authenticated users" },
+    { "name": "Transactions", "description": "Transaction listing" },
+    { "name": "Tax Documents", "description": "Tax documents listing" },
+    { "name": "Financial Documents", "description": "Financial documents listing" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "ProjectIdPath": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "MongoDB ObjectId for project",
+        "schema": {
+          "type": "string",
+          "example": "65f08fd30520e5ea19f4cb2b"
+        }
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "ok" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Unauthorized" }
+        }
+      },
+      "AuthRegisterRequest": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": { "type": "string", "example": "John Investor" },
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "phone": { "type": "string", "example": "+1 (555) 000-0000" },
+          "password": { "type": "string", "minLength": 6, "example": "password123" }
+        }
+      },
+      "AuthLoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "password": { "type": "string", "example": "password123" }
+        }
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
+          "user": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "RegisterResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "Signup successful. Your account is pending admin approval." },
+          "user": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "65f08fd30520e5ea19f4cb2a" },
+          "name": { "type": "string", "example": "John Investor" },
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "phone": { "type": "string", "example": "+1 (555) 000-0000" },
+          "role": { "type": "string", "enum": ["user", "admin"], "example": "user" },
+          "isApproved": { "type": "boolean", "example": false },
+          "approvedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "user": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "PendingUsersResponse": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/User" }
+          }
+        }
+      },
+      "ApproveUserResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string", "example": "User approved successfully" },
+          "emailSent": { "type": "boolean", "example": true },
+          "user": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "65f08fd30520e5ea19f4cb2b" },
+          "title": { "type": "string", "example": "CelinaMA" },
+          "description": { "type": "string", "example": "Project found in Celina, TX" },
+          "location": { "type": "string", "example": "Mark Alexander Ct and Kristina Ct, Celina, TX" },
+          "targetRaise": { "type": "number", "example": 500000 },
+          "currentRaised": { "type": "number", "example": 100000 },
+          "targetIrr": { "type": "number", "example": 14.5 },
+          "status": { "type": "string", "enum": ["active", "funded", "exited"], "example": "active" },
+          "images": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": []
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ProjectCreateRequest": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string", "example": "Leander282" },
+          "description": { "type": "string", "example": "Parcel in Leander, TX" },
+          "location": { "type": "string", "example": "3360 County Road 282, Leander, TX" },
+          "targetRaise": { "type": "number", "example": 300000 },
+          "currentRaised": { "type": "number", "example": 12000 },
+          "targetIrr": { "type": "number", "example": 12 },
+          "status": { "type": "string", "enum": ["active", "funded", "exited"], "example": "active" },
+          "images": {
+            "type": "array",
+            "items": { "type": "string" },
+            "example": []
+          }
+        }
+      },
+      "ProjectUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "location": { "type": "string" },
+          "targetRaise": { "type": "number" },
+          "currentRaised": { "type": "number" },
+          "targetIrr": { "type": "number" },
+          "status": { "type": "string", "enum": ["active", "funded", "exited"] },
+          "images": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "ProjectListResponse": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Project" }
+          }
+        }
+      },
+      "ProjectItemResponse": {
+        "type": "object",
+        "properties": {
+          "project": { "$ref": "#/components/schemas/Project" }
+        }
+      },
+      "InvestmentCreateRequest": {
+        "type": "object",
+        "required": ["projectId", "amount"],
+        "properties": {
+          "projectId": { "type": "string", "example": "65f08fd30520e5ea19f4cb2b" },
+          "amount": { "type": "number", "example": 100000 }
+        }
+      },
+      "Investment": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "65f08fd30520e5ea19f4cb2f" },
+          "user": { "type": "string", "example": "65f08fd30520e5ea19f4cb2a" },
+          "project": {
+            "oneOf": [
+              { "type": "string", "example": "65f08fd30520e5ea19f4cb2b" },
+              { "$ref": "#/components/schemas/Project" }
+            ]
+          },
+          "amount": { "type": "number", "example": 12000 },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "InvestmentItemResponse": {
+        "type": "object",
+        "properties": {
+          "investment": { "$ref": "#/components/schemas/Investment" }
+        }
+      },
+      "InvestmentListResponse": {
+        "type": "object",
+        "properties": {
+          "investments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Investment" }
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "65f08fd30520e5ea19f4cb31" },
+          "investmentName": { "type": "string", "example": "" },
+          "projectName": { "type": "string", "example": "Princeton Parc" },
+          "type": { "type": "string", "enum": ["investment", "distribution", "return"], "example": "distribution" },
+          "amount": { "type": "number", "example": 12500 },
+          "status": { "type": "string", "enum": ["completed", "pending", "processing"], "example": "completed" },
+          "entity": { "type": "string", "example": "IRA Services Trust FBO ABC" },
+          "date": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TransactionListResponse": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Transaction" }
+          }
+        }
+      },
+      "TaxDocument": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "65f08fd30520e5ea19f4cb40" },
+          "name": { "type": "string", "example": "2024_SIFFI LLC_4646_K1_Partnership.pdf" },
+          "investingEntity": { "type": "string", "example": "Siffi LLC" },
+          "asset": { "type": "string", "example": "--" },
+          "year": { "type": "integer", "example": 2025 },
+          "sharedDate": { "type": "string", "example": "03/19/25" },
+          "projectName": { "type": "string", "example": "Lakes at Renaissance" },
+          "url": { "type": "string", "example": "#" },
+          "isNew": { "type": "boolean", "example": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TaxDocumentListResponse": {
+        "type": "object",
+        "properties": {
+          "taxDocuments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TaxDocument" }
+          }
+        }
+      },
+      "FinancialDocument": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string", "example": "65f08fd30520e5ea19f4cb4d" },
+          "name": { "type": "string", "example": "Q1 2025 Investor Update - Lakes at Renaissance.pdf" },
+          "investingEntity": { "type": "string", "example": "Siffi LLC" },
+          "asset": { "type": "string", "example": "--" },
+          "category": { "type": "string", "example": "Investor Update" },
+          "year": { "type": "integer", "example": 2025 },
+          "sharedDate": { "type": "string", "example": "04/30/25" },
+          "projectName": { "type": "string", "example": "Lakes at Renaissance" },
+          "url": { "type": "string", "example": "#" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FinancialDocumentListResponse": {
+        "type": "object",
+        "properties": {
+          "financialDocuments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FinancialDocument" }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuthRegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegisterResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login and get JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AuthLoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthTokenResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Pending admin approval",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current user profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Current user",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MeResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/pending-users": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "List users pending approval",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Pending users list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PendingUsersResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin access required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/users/{id}/approve": {
+      "patch": {
+        "tags": ["Auth"],
+        "summary": "Approve user and send approval email",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ProjectIdPath" }],
+        "responses": {
+          "200": {
+            "description": "User approved",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApproveUserResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Admin access required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "List all projects",
+        "responses": {
+          "200": {
+            "description": "Projects list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProjectListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create a project",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProjectCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Project created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProjectItemResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{id}": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project by id",
+        "parameters": [{ "$ref": "#/components/parameters/ProjectIdPath" }],
+        "responses": {
+          "200": {
+            "description": "Project details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProjectItemResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Projects"],
+        "summary": "Update project by id",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ProjectIdPath" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProjectUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated project",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProjectItemResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Projects"],
+        "summary": "Delete project by id",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/ProjectIdPath" }],
+        "responses": {
+          "200": {
+            "description": "Delete result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean", "example": true }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/investments": {
+      "get": {
+        "tags": ["Investments"],
+        "summary": "List investments for current user",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Investments list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InvestmentListResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Investments"],
+        "summary": "Create an investment",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InvestmentCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Investment created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InvestmentItemResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/transactions": {
+      "get": {
+        "tags": ["Transactions"],
+        "summary": "List all transactions",
+        "responses": {
+          "200": {
+            "description": "Transactions list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TransactionListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tax-documents": {
+      "get": {
+        "tags": ["Tax Documents"],
+        "summary": "List tax documents",
+        "responses": {
+          "200": {
+            "description": "Tax documents list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TaxDocumentListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/financial-documents": {
+      "get": {
+        "tags": ["Financial Documents"],
+        "summary": "List financial documents",
+        "responses": {
+          "200": {
+            "description": "Financial documents list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FinancialDocumentListResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

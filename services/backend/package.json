@@ -1,0 +1,37 @@
+{
+  "name": "realestate-backend",
+  "version": "0.1.0",
+  "description": "Backend service for Real Estate Investments - Express + MongoDB",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node scripts/dev-with-port-clean.js",
+    "dev:raw": "nodemon --watch src --exec node src/index.js",
+    "seed": "node scripts/seed-sample.js",
+    "test:mail": "node scripts/test-mail.js",
+    "smtp:fake": "node scripts/fake-smtp-server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.1013.0",
+    "bcrypt": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.3.1",
+    "express-validator": "^6.15.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.3.1",
+    "multer": "^2.1.1",
+    "nodemailer": "^7.0.5",
+    "swagger-ui-express": "^4.6.3"
+  },
+  "devDependencies": {
+    "kill-port": "^2.0.1",
+    "nodemon": "^2.0.22",
+    "smtp-server": "^3.18.1"
+  }
+}

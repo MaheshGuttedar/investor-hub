@@ -1,0 +1,88 @@
+{
+  "family": "backend-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/investor-hub-backend:latest",
+      "portMappings": [
+        {
+          "containerPort": 4000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "4000" }
+      ],
+      "secrets": [
+        {
+          "name": "MONGODB_URI",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/MONGODB_URI"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/JWT_SECRET"
+        },
+        {
+          "name": "SMTP_HOST",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/SMTP_HOST"
+        },
+        {
+          "name": "SMTP_PORT",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/SMTP_PORT"
+        },
+        {
+          "name": "SMTP_SECURE",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/SMTP_SECURE"
+        },
+        {
+          "name": "SMTP_USER",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/SMTP_USER"
+        },
+        {
+          "name": "SMTP_PASS",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/SMTP_PASS"
+        },
+        {
+          "name": "EMAIL_FROM",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/EMAIL_FROM"
+        },
+        {
+          "name": "APP_LOGIN_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/APP_LOGIN_URL"
+        },
+        {
+          "name": "ALLOWED_ORIGINS",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/ALLOWED_ORIGINS"
+        },
+        {
+          "name": "AWS_ACCESS_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/AWS_ACCESS_KEY"
+        },
+        {
+          "name": "AWS_SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/AWS_SECRET_KEY"
+        },
+        {
+          "name": "SENDER_EMAIL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/investor-hub/SENDER_EMAIL"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/backend-task",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "essential": true
+    }
+  ]
+}
